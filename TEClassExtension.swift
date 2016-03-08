@@ -11,15 +11,16 @@ extension NSURL{
 	
 	///	检查url是否合法，自动检测协议，若无则添加https://
 	///
-	///	- parameter StringToBeCheck:	<#StringToBeCheck description#>
+	///	- parameter StringToBeCheck:	 需要检查的字符串
 	///
-	///	- returns: <#return value description#>
+	///	- returns: 如果字符串不合法返回nil
 	convenience init?(StringToBeCheck:String){
 		guard StringToBeCheck.characters.count > 0 else {return nil}
 		var urlString = ""
 		if(StringToBeCheck.rangeOfString(":") == nil){
 			urlString = "https://" + StringToBeCheck
 		}
+		else {urlString = StringToBeCheck}
 		self.init(string: urlString)
 		if !UIApplication.sharedApplication().canOpenURL(self){
 			return nil
