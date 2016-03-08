@@ -40,4 +40,27 @@ class TESettings{
 		}
 		return nil
 	}
+	
+	///	删除指定的属性
+	///
+	///	- parameter key:	属性名
+	internal static func Delete(propertyName:String){
+		guard let shareSettings:NSUserDefaults = NSUserDefaults()
+			else {fatalError("can't load user defualts, please check your entitlements")}
+		shareSettings.removeObjectForKey(propertyName)
+		shareSettings.synchronize()
+	}
+	
+	///	重置全部设置
+	internal static func ResetAll()
+	{
+		guard let shareSettings:NSUserDefaults = NSUserDefaults()
+			else {fatalError("can't load user defualts, please check your entitlements")}
+		shareSettings.dictionaryRepresentation()
+		for key in shareSettings.dictionaryRepresentation().keys
+		{
+			shareSettings.removeObjectForKey(key)
+		}
+		shareSettings.synchronize()
+	}
 }
