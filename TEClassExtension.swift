@@ -22,9 +22,25 @@ extension NSURL{
 		}
 		else {urlString = StringToBeCheck}
 		self.init(string: urlString)
-		if !UIApplication.sharedApplication().canOpenURL(self){
+		guard let application = UIApplication.safeSharedApplication()
+			else {return nil}
+		guard application.canOpenURL(self) else {return nil}
+	}
+}
+
+/// please get by UIApplication.safeSharedApplication()
+var retainedApplication:UIApplication?
+extension UIApplication {
+	static func safeSharedApplication() -> UIApplication? {
+		guard retainedApplication == nil else {return retainedApplication}
+		guard UIApplication.respondsToSelector("sharedApplication") else {
 			return nil
 		}
+		guard let unmanagedSharedApplication = UIApplication.performSelector("sharedApplication") else {
+			return nil
+		}
+		retainedApplication = unmanagedSharedApplication.takeRetainedValue() as? UIApplication
+		return retainedApplication
 	}
 }
 
