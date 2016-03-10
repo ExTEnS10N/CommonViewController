@@ -121,3 +121,44 @@ extension String
 		return bytes;
 	}
 }
+
+extension UIColor{
+	///	Convert hexString to UIColor
+	///
+	/// support:
+	/// - "#012345" & "012345"
+	/// - "#AABBCCEE" & "AABBCCEE"
+	///
+	///	- parameter hexString:	16进制字符串
+	///
+	///	- returns: 如果成功，初始化UIColor, 否则返回nil
+	convenience init?(hexString:String){
+		let hex:[Character] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+		let splitHex:(String) -> [CGFloat]? = {
+			//			(String) -> [Int] in
+			var num:Int? = nil
+			var hexqueue:[CGFloat] = []
+			for char in $0.characters{
+				let i = hex.indexOf(char)
+				guard i >= 0 else {return nil}
+				if num == nil {num = i! * 16}
+				else {hexqueue.append(CGFloat(num! + i!) / 255); num = nil}
+			}
+			return hexqueue
+		}
+		
+		var startIndex = 0
+		if hexString.characters.first == "#"{startIndex = 1}
+		if hexString.characters.count == 8 + startIndex{
+			guard let hexcolors = splitHex(hexString.subString(startIndex, length: 8))
+				else {return nil}
+			self.init(red: hexcolors[1], green: hexcolors[2], blue: hexcolors[3], alpha: hexcolors[0])
+		}
+		else if hexString.characters.count == 6 + startIndex{
+			guard let hexcolors = splitHex(hexString.subString(startIndex, length: 6))
+				else {return nil}
+			self.init(red: hexcolors[0], green: hexcolors[1], blue: hexcolors[2], alpha: 1)
+		}
+		else{return nil}
+	}
+}
