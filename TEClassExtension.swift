@@ -8,41 +8,67 @@
 import UIKit
 
 extension NSURL{
-	
-	///	检查url是否合法，自动检测协议，若无则添加https://
-	///
-	///	- parameter StringToBeCheck:	 需要检查的字符串
-	///
-	///	- returns: 如果字符串不合法返回nil
-	convenience init?(StringToBeCheck:String){
-		guard StringToBeCheck.characters.count > 0 else {return nil}
-		var urlString = ""
-		if(StringToBeCheck.rangeOfString(":") == nil){
-			urlString = "https://" + StringToBeCheck
+	convenience init?(unSafeString:String){
+		guard unSafeString.characters.count > 0 else {return nil}
+		var urlString:String? = ""
+		if(unSafeString.rangeOfString(":") == nil){
+			urlString = "https://" + unSafeString
 		}
-		else {urlString = StringToBeCheck}
-		self.init(string: urlString)
-		guard let application = UIApplication.safeSharedApplication()
-			else {return nil}
-		guard application.canOpenURL(self) else {return nil}
+		else {urlString = unSafeString}
+		
+		/*
+		URLQueryAllowedCharacterSet() 相等 URLFragmentAllowedCharacterSet()
+		URLQueryAllowedCharacterSet() 相交或相离 URLHostAllowedCharacterSet()
+		URLQueryAllowedCharacterSet() 包含 URLPathAllowedCharacterSet()
+		URLQueryAllowedCharacterSet() 包含 URLUserAllowedCharacterSet()
+		URLQueryAllowedCharacterSet() 包含 URLPasswordAllowedCharacterSet()
+		*/
+		let allowSet =  NSMutableCharacterSet()
+		allowSet.addCharactersInString("#")
+		allowSet.formUnionWithCharacterSet(NSCharacterSet.URLQueryAllowedCharacterSet())
+		allowSet.formUnionWithCharacterSet(NSCharacterSet.URLHostAllowedCharacterSet())
+		urlString = urlString?.stringByRemovingPercentEncoding
+		urlString = urlString!.stringByAddingPercentEncodingWithAllowedCharacters(allowSet)
+		
+		guard urlString != nil else {return nil}
+		self.init(string: urlString!)
+	}
+	
+	static func URLIsEqual(url1: String, url2: String) -> Bool{
+		guard let u1 = NSURL(unSafeString: url1) else{return false}
+		guard let u2 = NSURL(unSafeString: url2) else{return false}
+		if u1 == u2 {return true}
+		else if(u1.pathExtension?.characters.count > 0 || u2.pathExtension?.characters.count > 0){
+			return false
+		}
+		else {
+			return u1.URLByAppendingPathComponent("") == u2.URLByAppendingPathComponent("")
+		}
+	}
+	
+	func domainName() -> String?{
+		guard let host = self.host else{return nil}
+		let domains = host.componentsSeparatedByString(".")
+		switch domains.count{
+		case 0: return nil
+		case 1, 2: return domains[0]
+		default: return domains[1]
+		}
+	}
+	
+	/// remove all path extension and standardlize url.(read-only)
+	var URLWithoutPathExtension:NSURL?{
+		get
+		{
+			var tempURL:NSURL? = self
+			while tempURL?.lastPathComponent?.characters.count > 0{
+				tempURL = tempURL?.URLByDeletingLastPathComponent?.standardizedURL
+			}
+			return tempURL
+		}
 	}
 }
 
-/// please get by UIApplication.safeSharedApplication()
-var retainedApplication:UIApplication?
-extension UIApplication {
-	static func safeSharedApplication() -> UIApplication? {
-		guard retainedApplication == nil else {return retainedApplication}
-		guard UIApplication.respondsToSelector("sharedApplication") else {
-			return nil
-		}
-		guard let unmanagedSharedApplication = UIApplication.performSelector("sharedApplication") else {
-			return nil
-		}
-		retainedApplication = unmanagedSharedApplication.takeRetainedValue() as? UIApplication
-		return retainedApplication
-	}
-}
 
 extension String
 {
